@@ -1,5 +1,13 @@
 """
 Contains all the functions for scraping 
+
+- please keep note that theres a limit of 60 api calls per hour per IP address (unathorized API calls)
+- how to do authorized API calls? 
+
+# example.... How to get token???
+login = requests.get('https://api.github.com/search/repositories?q=github+api', auth=(username,token))
+
+
 """ 
 import requests
 from collections import defaultdict
@@ -51,7 +59,7 @@ def get_commit_files(owner, repo, user):
             end = file['filename'].split('.')[-1].lower() # gets the end of a file 
             file_types[end] += file['additions'] + file['deletions'] # gets the bytes adjusted 
     
-    return file_types
+    return dct_to_percents(file_types) # convert the final dct to percents at the end
 
 # test for getting stats thru commits...
 test = get_repos('agonzalez22')
@@ -59,10 +67,13 @@ for key, value in test.items():
     get_commit_files(value, key, 'agonzalez22')
     break 
 
-
 """ GETTING GITHUB STATS THRU REPO STATS """
-
-    
+def dct_to_percents(dct): 
+    """ takes a dict and converts it's contents to percent values...
+    """
+    total = sum(list(dct.values())) # calculate the toal 
+    return {key: val/total for key, val in dct.items()} # return new dct 
+        
 def get_lang_stats(username, repo): 
     """ given a user and a repo, get all the lang stats 
     Args: 
@@ -95,9 +106,7 @@ def get_total_stats(username):
             total += bytes_
 
     # convert the bytes stats into percentages 
-    stats = {}
-    for lang, bytes_ in byte_stats.items(): 
-        stats[lang] = bytes_ / total
+    stats = dct_to_percents(byte_stats)
     
     print(f"{username}'s GitHub Stats: {stats}") # for debugging 
     return stats
